@@ -6,13 +6,49 @@ import Loading from "../components/Loading";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
+import { axiosInstance } from "../axiosinstance";
 
 const Update = () => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [progress, setProgress] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting]=useState(false)
   const redirect = useNavigate();
+  const {goalId}=useParams()
+  useEffect(()=>{
+const getGoal=async ()=>{
+const {data}=await axiosInstance(`/${goalId}`)
+console.log(data)
+setIsLoading(false)
+setTitle(data.goal.title)
+setDescription(data.goal.description)
+setProgress(data.goal.progress)
+
+}
+getGoal()
+  },[goalId])
+
+  const handleUpdate=async (e)=>{
+    e.preventDefault()
+    setIsSubmitting(true)
+    
+try {
+      const { data } = await axiosInstance.patch(`/${goalId}`, {
+        title,
+        description,
+        progress,
+      });
+      if(data.success){
+        redirect("/all")
+      }
+
+} catch (error) {
+  console.log(error)
+  toast.error("you can not change to an existing title")
+  setIsSubmitting(false)
+}
+  }
 
   return (
     <>
@@ -23,13 +59,14 @@ const Update = () => {
         <div className="container d-flex justify-content-between align-items-center mt-3 pb-3 gap-lg-2">
           <div className="main-form py-5 px-1 ps-lg-2 ps-xl-3 pe-xl-3 rounded-2">
             <ToastContainer />
-            <form className="create-form">
+            <form onSubmit={handleUpdate} className="create-form">
               <div className="mt-2">
                 <input
                   type="text"
                   placeholder="Goal Title"
                   className="bg-transparent"
                   value={title}
+                  required
                   onChange={(e) => setTitle(e.target.value)}
                 />
               </div>
@@ -41,6 +78,7 @@ const Update = () => {
                   id=""
                   cols="30"
                   rows="10"
+                  required
                   placeholder="Goal Description"
                   className="bg-transparent"
                 ></textarea>
@@ -53,11 +91,12 @@ const Update = () => {
                   type="number"
                   min="0"
                   max="100"
+                  required
                   className="bg-transparent mt-2"
                 />
               </div>
               <div className="mt-2">
-                <button className="blue-bg p-2">Update</button>
+                <button className="blue-bg p-2" disabled={isSubmitting}>{isSubmitting?"updating...":"update"}</button>
               </div>
             </form>
           </div>
